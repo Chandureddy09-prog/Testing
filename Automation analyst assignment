@@ -1,0 +1,91 @@
+from selenium import webdriver
+from selenium.common import TimeoutException
+from selenium.webdriver import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support import expected_conditions as EC
+import time
+
+from selenium.webdriver.support.wait import WebDriverWait
+
+# Initialize WebDriver
+driver = webdriver.Chrome()
+driver.maximize_window()
+
+#Step 1: Navigate to the FitPeo Homepage
+driver.get("https://fitpeo.com")
+
+time.sleep(1)
+# Step 2: Navigate to the Revenue Calculator Page
+revenue_calculator_link = driver.find_element(By.LINK_TEXT, "Revenue Calculator")
+# Update the locator if necessary
+revenue_calculator_link.click()
+time.sleep(3)
+# Step 3: Scroll Down to the Slider Section
+slider_section = driver.find_element(By.XPATH, "//div[@class='MuiBox-root css-19zjbfs']")
+# Replace with the actual slider section ID or locator
+driver.execute_script("arguments[0].scrollIntoView();", slider_section)
+time.sleep(4)
+slider_handle=slider_section.find_element(By.XPATH, "//span/input[@aria-orientation='horizontal']")
+ActionChains(driver).drag_and_drop_by_offset(slider_handle, 94, 0).release().perform()
+
+time.sleep(2)
+
+# Verify that the slider value is 823
+
+slider_value = driver.find_element(By.XPATH, "//span/input[@aria-orientation='horizontal']").get_attribute("value")
+assert slider_value == "823", f"Slider value mismatch: Expected 820, but got {slider_value}"
+print("Slider moved to 823 successfully!")
+
+text_field = driver.find_element(By.CLASS_NAME,"MuiInputBase-input")
+text_field.click()
+text_field.send_keys(Keys.CONTROL + "a")
+text_field.send_keys(Keys.DELETE)
+text_field.send_keys("560")
+text_field.send_keys(Keys.TAB)
+time.sleep(2)
+
+slider_value = driver.find_element(By.XPATH, "//span/input[@aria-orientation='horizontal']").get_attribute("value")
+assert slider_value == "560", f"Slider value mismatch: Expected 820, but got {slider_value}"
+print("Slider moved to 560 successfully!")
+time.sleep(4)
+
+
+cpt_codes = WebDriverWait(driver, 10).until(
+    EC.presence_of_all_elements_located((By.XPATH, "//input[@type='checkbox']"))
+)
+actions = ActionChains(driver)
+actions.move_to_element(cpt_codes[0]).perform()
+
+# Step 7: Select CPT Codes
+try:
+    # Scroll down further to the CPT code checkboxes section
+    cpt_codes_section = WebDriverWait(driver, 10).until(
+        EC.visibility_of_element_located((By.XPATH, "//div[@id='checkbox-section']"))  # Adjust XPath if needed
+    )
+    driver.execute_script("arguments[0].scrollIntoView();", cpt_codes_section)
+
+    # Locate the CPT code checkboxes (adjust the XPath to the correct locators on your page)
+    cpt_99091 = driver.find_element(By.XPATH, "//input[@id='CPT-99091']")
+    cpt_99453 = driver.find_element(By.XPATH, "//input[@id='CPT-99453']")
+    cpt_99454 = driver.find_element(By.XPATH, "//input[@id='CPT-99454']")
+    cpt_99474 = driver.find_element(By.XPATH, "//input[@id='CPT-99474']")
+
+    # Function to click on a checkbox if it's not already selected
+    def select_checkbox(checkbox):
+        if not checkbox.is_selected():
+            checkbox.click()
+            print(f"Checkbox for {checkbox.get_attribute('id')} selected.")
+        else:
+            print(f"Checkbox for {checkbox.get_attribute('id')} is already selected.")
+
+    # Select each CPT code
+    select_checkbox(cpt_99091)
+    select_checkbox(cpt_99453)
+    select_checkbox(cpt_99454)
+    select_checkbox(cpt_99474)
+
+except Exception as e:
+    print(f"Error selecting CPT codes: {e}")
+
+time.sleep(5)
